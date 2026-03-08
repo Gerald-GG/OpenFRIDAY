@@ -1,3 +1,7 @@
+venv/
+.env
+*.backup
 __pycache__/
+*.pyc__pycache__/
 *.pyc
 config.local.yaml
