@@ -1,0 +1,21 @@
+# OpenF.R.I.D.A.Y. Configuration
+ai:
+  provider: "openai"  # or "local", "gemini"
+  model: "gpt-3.5-turbo"
+  temperature: 0.7
+  max_tokens: 150
+
+voice:
+  wake_word: "hey friday"
+  tts_engine: "pyttsx3"  # or "elevenlabs"
+  voice_id: "default"
+
+system:
+  debug_mode: true
+  log_level: "INFO"
+  
+hud:
+  enabled: true
+  width: 800
+  height: 480
+  theme: "arc_reactor"
