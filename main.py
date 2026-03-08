@@ -80,16 +80,19 @@ class OpenFRIDAY:
         # Update HUD with what was heard
         self.hud.update_heard(text)
         
-        # Check for system commands first
-        if "shutdown" in text.lower() and "friday" in text.lower():
+        text_lower = text.lower()
+        
+        # ===== SYSTEM COMMANDS =====
+        if "shutdown" in text_lower and "friday" in text_lower:
             response = "Initiating shutdown sequence. Goodbye."
             print(f"🔵 F.R.I.D.A.Y.: {response}")
             self.tts.speak(response)
             self.running = False
             return
         
-        # Get system status
-        if "status" in text.lower() or "systems" in text.lower():
+        # ===== SYSTEM STATUS =====
+        # Only handle pure system status queries, not device status
+        if ("status" in text_lower or "systems" in text_lower) and "device" not in text_lower and "smart" not in text_lower:
             status = self.monitor.get_status()
             response = f"All systems nominal. CPU at {status['cpu_percent']} percent. Memory at {status['memory_percent']} percent."
             print(f"🔵 F.R.I.D.A.Y.: {response}")
@@ -97,15 +100,16 @@ class OpenFRIDAY:
             self.hud.update_status(status)
             return
         
-        # Get sensor data
-        if "sensors" in text.lower():
+        # ===== SENSOR DATA =====
+        if "sensors" in text_lower:
             sensor_data = self.sensors.get_all()
             response = f"Motion is {sensor_data['motion'].lower()}. Gyro is {sensor_data['gyro'].lower()}. GPS is {sensor_data['gps'].lower()}. Camera is on {sensor_data['camera'].lower()}."
             print(f"🔵 F.R.I.D.A.Y.: {response}")
             self.tts.speak(response)
             return
         
-        # Default: use AI for response
+        # ===== ALL OTHER COMMANDS GO TO AI PROCESSOR =====
+        # This includes weather, news, smart home, jokes, etc.
         response = self.ai.process(text)
         print(f"🔵 F.R.I.D.A.Y.: {response}")
         self.tts.speak(response)
@@ -123,12 +127,15 @@ class OpenFRIDAY:
         
         try:
             print("\n" + "-"*50)
-            print("🎯 System Ready! Say 'Hey F.R.I.D.A.Y.' followed by:")
-            print("   • 'What's my status?' - Check system stats")
-            print("   • 'How are my sensors?' - Check sensor data")
-            print("   • 'What time is it?' - Get current time")
-            print("   • 'Tell me a joke' - Have some fun")
-            print("   • 'Shutdown F.R.I.D.A.Y.' - Exit")
+            print("🎯 System Ready! Just speak naturally:")
+            print("   • 'What's the weather?'")
+            print("   • 'Read me the news'")
+            print("   • 'Turn on the lights'")
+            print("   • 'Set thermostat to 72'")
+            print("   • 'What's my device status?'")
+            print("   • 'Tell me a joke'")
+            print("   • 'What time is it?'")
+            print("   • 'Shutdown F.R.I.D.A.Y.'")
             print("-"*50 + "\n")
             print("💡 Press Ctrl+C in this terminal to exit")
             print("")

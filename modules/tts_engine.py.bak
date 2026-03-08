@@ -1,0 +1,127 @@
+import pyttsx3
+import logging
+import threading
+import os
+import random
+
+class TTSEngine:
+    def __init__(self, config):
+        self.config = config
+        self.logger = logging.getLogger(__name__)
+        self.engine = None
+        self.voice_character = os.getenv('FRIDAY_VOICE', 'friday')  # friday, jarvis, ultron, tony
+        self.init_engine()
+        
+    def init_engine(self):
+        """Initialize the text-to-speech engine with character voice"""
+        try:
+            self.engine = pyttsx3.init()
+            voices = self.engine.getProperty('voices')
+            
+            # Configure based on character
+            if self.voice_character.lower() == 'jarvis':
+                # J.A.R.V.I.S. - British, calm, sophisticated
+                self._set_jarvis_voice(voices)
+            elif self.voice_character.lower() == 'ultron':
+                # Ultron - Distorted, menacing
+                self._set_ultron_voice(voices)
+            elif self.voice_character.lower() == 'tony':
+                # Tony Stark - Sarcastic, American
+                self._set_tony_voice(voices)
+            else:
+                # F.R.I.D.A.Y. - Irish female (default)
+                self._set_friday_voice(voices)
+            
+            # Set common properties
+            self.engine.setProperty('volume', 0.9)
+            
+            self.logger.info(f"TTS Engine initialized with {self.voice_character} voice")
+            print(f"🔊 Voice character: {self.voice_character.upper()}")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to initialize TTS: {e}")
+            self.engine = None
+    
+    def _set_friday_voice(self, voices):
+        """Set voice to sound like F.R.I.D.A.Y. (Irish female)"""
+        # Try to find an Irish female voice
+        for voice in voices:
+            voice_name = voice.name.lower()
+            if 'irish' in voice_name or 'downton' in voice_name:
+                self.engine.setProperty('voice', voice.id)
+                break
+            elif 'female' in voice_name and ('english' in voice_name or 'uk' in voice_name):
+                self.engine.setProperty('voice', voice.id)
+                break
+        # Default rate for F.R.I.D.A.Y.
+        self.engine.setProperty('rate', 175)
+    
+    def _set_jarvis_voice(self, voices):
+        """Set voice to sound like J.A.R.V.I.S. (British male)"""
+        # Try to find a British male voice
+        for voice in voices:
+            voice_name = voice.name.lower()
+            if ('english' in voice_name or 'uk' in voice_name) and 'male' in voice_name:
+                self.engine.setProperty('voice', voice.id)
+                break
+        # Slower, more deliberate rate for J.A.R.V.I.S.
+        self.engine.setProperty('rate', 150)
+    
+    def _set_ultron_voice(self, voices):
+        """Set voice to sound like Ultron (distorted, robotic)"""
+        # Use a robotic voice if available
+        for voice in voices:
+            if 'robot' in voice.name.lower():
+                self.engine.setProperty('voice', voice.id)
+                break
+        # Slower, lower rate for menace
+        self.engine.setProperty('rate', 120)
+    
+    def _set_tony_voice(self, voices):
+        """Set voice to sound like Tony Stark (American male, sarcastic)"""
+        # Try to find an American male voice
+        for voice in voices:
+            voice_name = voice.name.lower()
+            if ('usa' in voice_name or 'american' in voice_name) and 'male' in voice_name:
+                self.engine.setProperty('voice', voice.id)
+                break
+        # Faster, energetic rate for Tony
+        self.engine.setProperty('rate', 200)
+    
+    def speak(self, text):
+        """Speak text asynchronously with character-appropriate delivery"""
+        if not self.engine:
+            self.logger.warning("TTS not available")
+            print(f"{self.voice_character.upper()}: {text}")
+            return
+        
+        # Create a copy of the text for the thread to avoid reference issues
+        speech_text = str(text)  # Make a copy
+            
+        def _speak(tts_engine, text_to_speak):
+            try:
+                # Add character-specific speech patterns
+                if tts_engine.voice_character.lower() == 'tony':
+                    # Tony sometimes adds sarcastic comments
+                    if random.random() < 0.2 and len(text_to_speak) < 50:
+                        quips = ["Obviously.", "What else would you expect?", "I know, I'm awesome.", "Took you long enough to ask."]
+                        text_to_speak = text_to_speak + " " + random.choice(quips)
+                
+                tts_engine.engine.say(text_to_speak)
+                tts_engine.engine.runAndWait()
+            except Exception as e:
+                tts_engine.logger.error(f"TTS error: {e}")
+                print(f"{tts_engine.voice_character.upper()}: {text_to_speak}")
+        
+        # Run in separate thread to avoid blocking - pass self and text as parameters
+        thread = threading.Thread(target=_speak, args=(self, speech_text))
+        thread.daemon = True
+        thread.start()
+    
+    def stop(self):
+        """Stop any current speech"""
+        if self.engine:
+            try:
+                self.engine.stop()
+            except:
+                pass
